@@ -10,12 +10,14 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                deleteDir()
                 checkout scm
             }
         }
 
         stage('Install') {
             steps {
+                sh 'pwd && ls -la'
                 sh '''
                     docker run --rm \
                         -v "$WORKSPACE":/app \
@@ -40,20 +42,19 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+                sh 'docker build --no-cache -t nodejs-express-mysql .'
             }
         }
 
         stage('Run') {
             steps {
                 sh '''
-                    docker stop ${DOCKER_CONTAINER} || true
-                    docker rm ${DOCKER_CONTAINER} || true
+                    docker rm -f nodejs-app || true
 
                     docker run -d \
-                    --name ${DOCKER_CONTAINER} \
-                    -p 8081:8080 \
-                    ${DOCKER_IMAGE}:latest
+                        -p 8081:8080 \
+                        --name nodejs-app \
+                        nodejs-express-mysql
                 '''
             }
         }
@@ -81,7 +82,7 @@ pipeline {
         always {
             sh '''
                 if command -v docker >/dev/null 2>&1; then
-                    docker rm -f ${DOCKER_CONTAINER} || true
+                    docker rm -f nodejs-app || true
                 fi
             '''
         }
