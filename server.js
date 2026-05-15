@@ -10,6 +10,11 @@ var corsOptions = {
 
 app.use(cors(corsOptions));
 
+// serve the simple frontend UI
+if (process.env.NODE_ENV !== "test") {
+  app.use(express.static("public"));
+}
+
 // parse requests of content-type - application/json
 app.use(express.json()); /* bodyParser.json() is deprecated */
 

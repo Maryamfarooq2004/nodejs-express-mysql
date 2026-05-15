@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial Management System</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #5b6478;
+      --accent: #1d4ed8;
+      --border: #d7deea;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 48px auto;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 8px 28px rgba(23, 32, 51, 0.06);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      padding: 12px 18px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(0.95);
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .output {
+      margin-top: 20px;
+      padding: 16px;
+      min-height: 180px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f9fbff;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>Tutorial Management System</h1>
+      <p>
+        This simple UI calls the existing backend API and displays the response as formatted JSON.
+      </p>
+      <button id="loadTutorialsBtn" type="button">Load Tutorials</button>
+      <div id="output" class="output">Click the button to load tutorials.</div>
+    </section>
+  </main>
+
+  <script>
+    const loadTutorialsBtn = document.getElementById('loadTutorialsBtn');
+    const output = document.getElementById('output');
+
+    function renderJson(data) {
+      output.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function renderError(message) {
+      output.textContent = `Error: ${message}`;
+    }
+
+    loadTutorialsBtn.addEventListener('click', async () => {
+      loadTutorialsBtn.disabled = true;
+      output.textContent = 'Loading tutorials...';
+
+      try {
+        const response = await fetch('/api/tutorials');
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        renderJson(data);
+      } catch (error) {
+        renderError(error.message);
+      } finally {
+        loadTutorialsBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
