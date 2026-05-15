@@ -28,16 +28,27 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .'
+                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
             }
         }
 
         stage('Run Docker Container') {
             steps {
                 sh '''
-                    docker rm -f ${DOCKER_CONTAINER} || true
-                    docker run -d --name ${DOCKER_CONTAINER} -p 8080:8080 ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    docker stop ${DOCKER_CONTAINER} || true
+                    docker rm ${DOCKER_CONTAINER} || true
+
+                    docker run -d \
+                    --name ${DOCKER_CONTAINER} \
+                    -p 8081:8080 \
+                    ${DOCKER_IMAGE}:latest
                 '''
+            }
+        }
+
+        stage('Verify Container') {
+            steps {
+                sh 'docker ps'
             }
         }
 
