@@ -5,7 +5,7 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql'
+                git branch: 'master', url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql'
             }
         }
 
