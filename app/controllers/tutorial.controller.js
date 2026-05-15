@@ -3,8 +3,8 @@ const Tutorial = require("../models/tutorial.model.js");
 // Create and Save a new Tutorial
 exports.create = (req, res) => {
   // Validate request
-  if (!req.body) {
-    res.status(400).send({
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).send({
       message: "Content can not be empty!"
     });
   }
@@ -73,8 +73,8 @@ exports.findAllPublished = (req, res) => {
 // Update a Tutorial identified by the id in the request
 exports.update = (req, res) => {
   // Validate Request
-  if (!req.body) {
-    res.status(400).send({
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).send({
       message: "Content can not be empty!"
     });
   }

@@ -1,0 +1,10 @@
+CREATE DATABASE IF NOT EXISTS testdb;
+USE testdb;
+
+CREATE TABLE IF NOT EXISTS tutorials (
+  id INT NOT NULL AUTO_INCREMENT,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  published BOOLEAN DEFAULT FALSE,
+  PRIMARY KEY (id)
+);

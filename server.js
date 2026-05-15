@@ -23,8 +23,12 @@ app.get("/", (req, res) => {
 
 require("./app/routes/tutorial.routes.js")(app);
 
-// set port, listen for requests
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
-});
+module.exports = app;
+
+// set port, listen for requests only when this file is run directly
+if (require.main === module) {
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}.`);
+  });
+}

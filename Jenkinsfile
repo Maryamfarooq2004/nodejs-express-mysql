@@ -1,17 +1,22 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE = 'nodejs-express-mysql'
+        DOCKER_CONTAINER = 'nodejs-express-mysql-ci'
+    }
+
     stages {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'master', url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql'
+                checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                sh 'npm ci'
             }
         }
 
@@ -23,19 +28,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t nodejs-app .'
+                sh 'docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .'
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                sh 'docker run -d -p 3000:3000 nodejs-app'
+                sh '''
+                    docker rm -f ${DOCKER_CONTAINER} || true
+                    docker run -d --name ${DOCKER_CONTAINER} -p 8080:8080 ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                '''
             }
         }
 
         stage('Selenium Tests') {
             steps {
-                echo 'Run Selenium tests here (next step we will add)'
+                echo 'Optional Selenium stage placeholder. Add browser tests here later.'
             }
         }
     }
@@ -46,6 +54,9 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed'
+        }
+        always {
+            sh 'docker rm -f ${DOCKER_CONTAINER} || true'
         }
     }
 }
