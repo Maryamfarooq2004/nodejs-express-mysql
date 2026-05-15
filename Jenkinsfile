@@ -3,6 +3,7 @@ pipeline {
 
     options {
         skipDefaultCheckout(true)
+        disableConcurrentBuilds()
     }
 
     stages {
@@ -13,16 +14,18 @@ pipeline {
             }
         }
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 git branch: 'master',
                     url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install') {
             steps {
                 sh '''
+                    set -e
+
                     echo "WORKSPACE=$WORKSPACE"
                     ls -la $WORKSPACE
                     echo "Checking package.json..."
@@ -31,10 +34,10 @@ pipeline {
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        -v $WORKSPACE:/app \
-                        -w /app \
+                        -v "$WORKSPACE:/workspace" \
+                        -w /workspace \
                         node:20-alpine \
-                        sh -lc "ls -la /app && cat /app/package.json && npm install"
+                        sh -lc "ls -la && cat package.json && npm install"
                 '''
             }
         }
@@ -42,11 +45,12 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
+                    set -e
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        -v $WORKSPACE:/app \
-                        -w /app \
+                        -v "$WORKSPACE:/workspace" \
+                        -w /workspace \
                         node:20-alpine \
                         sh -lc "npm test"
                 '''
@@ -56,6 +60,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
+                    set -e
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
                     docker build --no-cache -t node-app:latest .
                 '''
@@ -65,6 +70,7 @@ pipeline {
         stage('Run Container') {
             steps {
                 sh '''
+                    set -e
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
                     docker rm -f node-app || true
 
