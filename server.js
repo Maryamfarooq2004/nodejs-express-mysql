@@ -23,7 +23,13 @@ app.use(express.urlencoded({ extended: true })); /* bodyParser.urlencoded() is d
 
 // simple route
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to bezkoder application." });
+  const acceptHeader = req.headers.accept || "";
+
+  if (acceptHeader.includes("text/html")) {
+    return res.sendFile(require("path").join(__dirname, "public", "index.html"));
+  }
+
+  return res.json({ message: "Welcome to bezkoder application." });
 });
 
 app.get("/tutorials", (req, res) => {

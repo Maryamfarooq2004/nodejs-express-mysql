@@ -8,31 +8,43 @@ pipeline {
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install') {
             steps {
-                sh 'npm install'
+                sh '''
+                    docker run --rm \
+                        -v "$WORKSPACE":/app \
+                        -w /app \
+                        node:20-alpine \
+                        sh -lc "npm install"
+                '''
             }
         }
 
-        stage('Unit Tests') {
+        stage('Test') {
             steps {
-                sh 'npm test'
+                sh '''
+                    docker run --rm \
+                        -v "$WORKSPACE":/app \
+                        -w /app \
+                        node:20-alpine \
+                        sh -lc "npm test"
+                '''
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build') {
             steps {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Run') {
             steps {
                 sh '''
                     docker stop ${DOCKER_CONTAINER} || true
@@ -46,13 +58,7 @@ pipeline {
             }
         }
 
-        stage('Verify Container') {
-            steps {
-                sh 'docker ps'
-            }
-        }
-
-        stage('Selenium Tests') {
+        stage('Selenium') {
             steps {
                 sh 'docker build -f Dockerfile.selenium -t ${DOCKER_IMAGE}-selenium:latest .'
                 sh '''
