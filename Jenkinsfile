@@ -5,11 +5,6 @@ pipeline {
         skipDefaultCheckout(true)
     }
 
-    environment {
-        DOCKER_IMAGE = 'nodejs-express-mysql'
-        DOCKER_CONTAINER = 'node-app'
-    }
-
     stages {
 
         stage('Clean Workspace') {
@@ -20,22 +15,23 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'master',
+                    url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    pwd
-                    ls -la
-                    test -f package.json
+                    echo "Workspace: $WORKSPACE"
+                    ls -la "$WORKSPACE"
+                    test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        -v "$WORKSPACE":/app \
+                        -v $WORKSPACE:/app \
                         -w /app \
                         node:20-alpine \
-                        sh -lc "npm install"
+                        sh -lc "ls -la /app && npm install"
                 '''
             }
         }
@@ -43,10 +39,10 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
-                    test -f package.json
+                    test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        -v "$WORKSPACE":/app \
+                        -v $WORKSPACE:/app \
                         -w /app \
                         node:20-alpine \
                         sh -lc "npm test"
@@ -90,13 +86,13 @@ pipeline {
             steps {
                 sh '''
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
-                    docker build -f Dockerfile.selenium -t ${DOCKER_IMAGE}-selenium:latest .
+                    docker build -f Dockerfile.selenium -t nodejs-express-mysql-selenium:latest .
                 '''
                 sh '''
                     docker run --rm --network host \
                         -e BASE_URL=http://localhost:8081 \
                         -e CHROME_BINARY_PATH=/usr/bin/chromium \
-                        ${DOCKER_IMAGE}-selenium:latest
+                        nodejs-express-mysql-selenium:latest
                 '''
             }
         }
