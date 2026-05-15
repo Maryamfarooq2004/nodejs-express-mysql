@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true)
-        disableConcurrentBuilds()
+    environment {
+        IMAGE_NAME = "node-app"
+        CONTAINER_NAME = "node-app"
     }
 
     stages {
@@ -16,105 +16,55 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql.git'
+                git url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql.git', branch: 'master'
                 sh 'ls -la'
             }
         }
 
         stage('Install') {
             steps {
-                sh '''
-                    set -e
-
-                    echo "Copying project into clean container..."
-                    test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
-
-                    docker run --rm \
-                        -v "$WORKSPACE:/src" \
-                        node:20-alpine \
-                        sh -lc "mkdir -p /app && cp -r /src/. /app/ && cd /app && ls -la && cat package.json && npm install"
-                '''
+                sh 'npm install'
             }
         }
 
         stage('Test') {
             steps {
-                sh '''
-                    set -e
-                    test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
-
-                    docker run --rm \
-                        -v "$WORKSPACE:/src" \
-                        node:20-alpine \
-                        sh -lc "mkdir -p /app && cp -r /src/. /app/ && cd /app && npm test"
-                '''
+                sh 'npm test'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    set -e
-                    test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
-                    docker build --no-cache -t node-app:latest .
-                '''
+                sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
             }
         }
 
         stage('Run Container') {
             steps {
-                sh '''
-                    set -e
-                    test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
-                    docker rm -f node-app || true
-
-                    docker run -d \
-                        -p 8081:8080 \
-                        --name node-app \
-                        node-app:latest
-                '''
+                sh "docker rm -f ${CONTAINER_NAME} || true"
+                sh "docker run -d --name ${CONTAINER_NAME} -p 8081:8080 ${IMAGE_NAME}:${BUILD_NUMBER}"
             }
         }
 
         stage('Verify Container') {
             steps {
-                sh 'docker ps -a'
+                sh 'sleep 5'
+                sh "docker ps | grep ${CONTAINER_NAME}"
             }
         }
 
         stage('Selenium') {
-            when {
-                expression { fileExists('Dockerfile.selenium') }
-            }
             steps {
-                sh '''
-                    test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
-                    docker build -f Dockerfile.selenium -t nodejs-express-mysql-selenium:latest .
-                '''
-                sh '''
-                    docker run --rm --network host \
-                        -e BASE_URL=http://localhost:8081 \
-                        -e CHROME_BINARY_PATH=/usr/bin/chromium \
-                        nodejs-express-mysql-selenium:latest
-                '''
+                sh "docker build -t selenium-tests -f Dockerfile.selenium ."
+                sh "docker run --rm --network host selenium-tests"
             }
         }
     }
 
     post {
-        success {
-            echo 'Pipeline executed successfully'
-        }
-        failure {
-            echo 'Pipeline failed'
-        }
         always {
-            sh '''
-                if command -v docker >/dev/null 2>&1; then
-                    docker rm -f node-app || true
-                fi
-            '''
+            sh "docker rm -f ${CONTAINER_NAME} || true"
+            echo 'Pipeline finished'
         }
     }
 }
