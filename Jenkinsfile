@@ -56,7 +56,11 @@ pipeline {
             echo 'Pipeline failed'
         }
         always {
-            sh 'docker rm -f ${DOCKER_CONTAINER} || true'
+            sh '''
+                if command -v docker >/dev/null 2>&1; then
+                    docker rm -f ${DOCKER_CONTAINER} || true
+                fi
+            '''
         }
     }
 }
