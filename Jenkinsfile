@@ -27,17 +27,13 @@ pipeline {
                 sh '''
                     set -e
 
-                    echo "WORKSPACE=$WORKSPACE"
-                    ls -la "$WORKSPACE"
-                    test -f "$WORKSPACE/package.json" || (echo "package.json missing" && exit 1)
+                    echo "Copying project into clean container..."
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        --user $(id -u):$(id -g) \
-                        -v "$WORKSPACE:$WORKSPACE" \
-                        -w "$WORKSPACE" \
+                        -v "$WORKSPACE:/src" \
                         node:20-alpine \
-                        sh -lc "echo 'INSIDE CONTAINER:' && ls -la && cat package.json && npm install"
+                        sh -lc "mkdir -p /app && cp -r /src/. /app/ && cd /app && ls -la && cat package.json && npm install"
                 '''
             }
         }
@@ -49,11 +45,9 @@ pipeline {
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        --user $(id -u):$(id -g) \
-                        -v "$WORKSPACE:$WORKSPACE" \
-                        -w "$WORKSPACE" \
+                        -v "$WORKSPACE:/src" \
                         node:20-alpine \
-                        sh -lc "npm test"
+                        sh -lc "mkdir -p /app && cp -r /src/. /app/ && cd /app && npm test"
                 '''
             }
         }
