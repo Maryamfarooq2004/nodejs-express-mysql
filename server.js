@@ -21,6 +21,10 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to bezkoder application." });
 });
 
+app.get("/tutorials", (req, res) => {
+  res.status(200).json({ message: "Tutorials endpoint loaded successfully." });
+});
+
 require("./app/routes/tutorial.routes.js")(app);
 
 module.exports = app;

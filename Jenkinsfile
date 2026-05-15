@@ -54,7 +54,13 @@ pipeline {
 
         stage('Selenium Tests') {
             steps {
-                echo 'Optional Selenium stage placeholder. Add browser tests here later.'
+                sh 'docker build -f Dockerfile.selenium -t ${DOCKER_IMAGE}-selenium:latest .'
+                sh '''
+                    docker run --rm --network host \
+                        -e BASE_URL=http://localhost:8081 \
+                        -e CHROME_BINARY_PATH=/usr/bin/chromium \
+                        ${DOCKER_IMAGE}-selenium:latest
+                '''
             }
         }
     }
