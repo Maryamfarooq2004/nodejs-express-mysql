@@ -18,6 +18,7 @@ pipeline {
             steps {
                 git branch: 'master',
                     url: 'https://github.com/Maryamfarooq2004/nodejs-express-mysql.git'
+                sh 'ls -la'
             }
         }
 
@@ -27,17 +28,16 @@ pipeline {
                     set -e
 
                     echo "WORKSPACE=$WORKSPACE"
-                    ls -la $WORKSPACE
-                    echo "Checking package.json..."
-                    cat $WORKSPACE/package.json
-                    test -f $WORKSPACE/package.json || (echo "package.json missing" && exit 1)
+                    ls -la "$WORKSPACE"
+                    test -f "$WORKSPACE/package.json" || (echo "package.json missing" && exit 1)
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        -v "$WORKSPACE:/workspace" \
-                        -w /workspace \
+                        --user $(id -u):$(id -g) \
+                        -v "$WORKSPACE:$WORKSPACE" \
+                        -w "$WORKSPACE" \
                         node:20-alpine \
-                        sh -lc "ls -la && cat package.json && npm install"
+                        sh -lc "echo 'INSIDE CONTAINER:' && ls -la && cat package.json && npm install"
                 '''
             }
         }
@@ -49,8 +49,9 @@ pipeline {
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
-                        -v "$WORKSPACE:/workspace" \
-                        -w /workspace \
+                        --user $(id -u):$(id -g) \
+                        -v "$WORKSPACE:$WORKSPACE" \
+                        -w "$WORKSPACE" \
                         node:20-alpine \
                         sh -lc "npm test"
                 '''
