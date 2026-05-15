@@ -23,15 +23,18 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "Workspace: $WORKSPACE"
-                    ls -la "$WORKSPACE"
+                    echo "WORKSPACE=$WORKSPACE"
+                    ls -la $WORKSPACE
+                    echo "Checking package.json..."
+                    cat $WORKSPACE/package.json
+                    test -f $WORKSPACE/package.json || (echo "package.json missing" && exit 1)
                     test -S /var/run/docker.sock || (echo 'Docker socket is not mounted into Jenkins' && exit 1)
 
                     docker run --rm \
                         -v $WORKSPACE:/app \
                         -w /app \
                         node:20-alpine \
-                        sh -lc "ls -la /app && npm install"
+                        sh -lc "ls -la /app && cat /app/package.json && npm install"
                 '''
             }
         }
